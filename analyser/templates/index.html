@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeshCore Analyser</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 1rem auto; max-width: 1100px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 0.4rem; font-size: 0.9rem; }
+    th { background: #f4f4f4; text-align: left; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .card { border: 1px solid #ddd; padding: 0.8rem; border-radius: 6px; }
+    code { background: #f8f8f8; padding: 0.1rem 0.2rem; }
+  </style>
+</head>
+<body>
+  <h1>DongLoRa MeshCore Analyser</h1>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Collector Status</h3>
+      <pre>{{ collector | tojson(indent=2) }}</pre>
+    </div>
+    <div class="card">
+      <h3>Current Profile</h3>
+      <pre>{{ profile | tojson(indent=2) }}</pre>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Summary (last 60 min)</h3>
+      <ul>
+        <li>Packets: <strong>{{ summary.packet_count }}</strong></li>
+        <li>Airtime ms total: <strong>{{ '%.2f'|format(summary.airtime_ms_total) }}</strong></li>
+        <li>Average RSSI: <strong>{{ '%.2f'|format(summary.avg_rssi) }}</strong></li>
+        <li>Average SNR: <strong>{{ '%.2f'|format(summary.avg_snr) }}</strong></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Top Fingerprints</h3>
+      <table>
+        <thead>
+          <tr><th>Count</th><th>Prefix4</th><th>Prefix8</th><th>Hash</th></tr>
+        </thead>
+        <tbody>
+          {% for row in fingerprints %}
+          <tr>
+            <td>{{ row.count }}</td>
+            <td><code>{{ row.prefix_hex_4 }}</code></td>
+            <td><code>{{ row.prefix_hex_8 }}</code></td>
+            <td><code>{{ row.payload_sha256[:24] }}…</code></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Recent Packets</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Time (UTC)</th><th>RSSI</th><th>SNR</th><th>Len</th><th>Airtime (ms)</th><th>Prefix8</th><th>Duplicate Key</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pkt in recent_packets %}
+      <tr>
+        <td>{{ pkt.ts_utc }}</td>
+        <td>{{ '%.1f'|format(pkt.rssi_dbm) }}</td>
+        <td>{{ '%.1f'|format(pkt.snr_db) }}</td>
+        <td>{{ pkt.payload_len }}</td>
+        <td>{{ '%.2f'|format(pkt.airtime_ms_est) }}</td>
+        <td><code>{{ pkt.prefix_hex_8 }}</code></td>
+        <td><code>{{ pkt.duplicate_key }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>JSON endpoints: <code>/health</code>, <code>/api/profile</code>, <code>/api/packets/recent</code>,
+     <code>/api/stats/summary</code>, <code>/api/stats/timeseries</code>, <code>/api/fingerprints/top</code>.</p>
+</body>
+</html>
